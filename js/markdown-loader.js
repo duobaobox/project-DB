@@ -18,16 +18,36 @@
 const projectCache = new Map();
 
 // 加载 markdown-it 及其插件
-document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>');
-document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-emoji@2.0.2/dist/markdown-it-emoji.min.js"></script>');
-document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-footnote@3.0.3/dist/markdown-it-footnote.min.js"></script>');
-document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-sub@1.0.0/dist/markdown-it-sub.min.js"></script>');
-document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-sup@1.0.0/dist/markdown-it-sup.min.js"></script>');
-document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js"></script>');
-document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-anchor@8.6.7/dist/markdownItAnchor.min.js"></script>');
-document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-toc-done-right@4.2.0/dist/markdownItTocDoneRight.umd.min.js"></script>');
-document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-container@3.0.0/dist/markdown-it-container.min.js"></script>');
-document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-attrs@4.1.6/markdown-it-attrs.browser.js"></script>');
+document.write(
+  '<script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>'
+);
+document.write(
+  '<script src="https://cdn.jsdelivr.net/npm/markdown-it-emoji@2.0.2/dist/markdown-it-emoji.min.js"></script>'
+);
+document.write(
+  '<script src="https://cdn.jsdelivr.net/npm/markdown-it-footnote@3.0.3/dist/markdown-it-footnote.min.js"></script>'
+);
+document.write(
+  '<script src="https://cdn.jsdelivr.net/npm/markdown-it-sub@1.0.0/dist/markdown-it-sub.min.js"></script>'
+);
+document.write(
+  '<script src="https://cdn.jsdelivr.net/npm/markdown-it-sup@1.0.0/dist/markdown-it-sup.min.js"></script>'
+);
+document.write(
+  '<script src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js"></script>'
+);
+document.write(
+  '<script src="https://cdn.jsdelivr.net/npm/markdown-it-anchor@8.6.7/dist/markdownItAnchor.min.js"></script>'
+);
+document.write(
+  '<script src="https://cdn.jsdelivr.net/npm/markdown-it-toc-done-right@4.2.0/dist/markdownItTocDoneRight.umd.min.js"></script>'
+);
+document.write(
+  '<script src="https://cdn.jsdelivr.net/npm/markdown-it-container@3.0.0/dist/markdown-it-container.min.js"></script>'
+);
+document.write(
+  '<script src="https://cdn.jsdelivr.net/npm/markdown-it-attrs@4.1.6/markdown-it-attrs.browser.js"></script>'
+);
 
 // 增强版 Markdown 解析器类
 class MarkdownParser {
@@ -37,101 +57,101 @@ class MarkdownParser {
    */
   static getMarkdownIt() {
     // 确保 markdown-it 已加载
-    if (typeof window.markdownit === 'undefined') {
-      console.error('markdown-it 库未加载');
+    if (typeof window.markdownit === "undefined") {
+      console.error("markdown-it 库未加载");
       return null;
     }
 
     // 创建并配置 markdown-it 实例
     const md = window.markdownit({
-      html: true,         // 允许 HTML 标签
-      xhtmlOut: true,     // 使用 '/' 闭合单标签
-      breaks: true,       // 转换段落里的 '\n' 到 <br>
-      linkify: true,      // 自动将 URL 转换为链接
-      typographer: true,  // 启用一些语言中立的替换 + 引号美化
-      quotes: '""''',     // 引号样式
+      html: true, // 允许 HTML 标签
+      xhtmlOut: true, // 使用 '/' 闭合单标签
+      breaks: true, // 转换段落里的 '\n' 到 <br>
+      linkify: true, // 自动将 URL 转换为链接
+      typographer: true, // 启用一些语言中立的替换 + 引号美化
+      quotes: ["『』", "「」"], // 引号样式
       highlight: function (str, lang) {
         // 如果有代码高亮库可以在这里配置
         return `<pre class="language-${lang}"><code>${str}</code></pre>`;
-      }
+      },
     });
 
     // 添加插件（如果已加载）
     if (window.markdownitEmoji) {
       md.use(window.markdownitEmoji);
     }
-    
+
     if (window.markdownitFootnote) {
       md.use(window.markdownitFootnote);
     }
-    
+
     if (window.markdownitSub) {
       md.use(window.markdownitSub);
     }
-    
+
     if (window.markdownitSup) {
       md.use(window.markdownitSup);
     }
-    
+
     if (window.markdownitTaskLists) {
-      md.use(window.markdownitTaskLists, {enabled: true, label: true});
+      md.use(window.markdownitTaskLists, { enabled: true, label: true });
     }
-    
+
     if (window.markdownitAnchor && window.markdownItTocDoneRight) {
       md.use(window.markdownitAnchor, {
         permalink: true,
-        permalinkSymbol: '#',
-        permalinkBefore: true
+        permalinkSymbol: "#",
+        permalinkBefore: true,
       }).use(window.markdownItTocDoneRight, {
-        containerClass: 'toc-container',
-        listType: 'ul'
+        containerClass: "toc-container",
+        listType: "ul",
       });
     }
-    
+
     if (window.markdownitContainer) {
       // 添加提示容器
-      md.use(window.markdownitContainer, 'tip', {
-        validate: function(params) {
-          return params.trim() === 'tip';
+      md.use(window.markdownitContainer, "tip", {
+        validate: function (params) {
+          return params.trim() === "tip";
         },
         render: function (tokens, idx) {
           if (tokens[idx].nesting === 1) {
             return '<div class="tip custom-block">\n<p class="custom-block-title">提示</p>\n';
           } else {
-            return '</div>\n';
+            return "</div>\n";
           }
-        }
+        },
       });
-      
+
       // 添加警告容器
-      md.use(window.markdownitContainer, 'warning', {
-        validate: function(params) {
-          return params.trim() === 'warning';
+      md.use(window.markdownitContainer, "warning", {
+        validate: function (params) {
+          return params.trim() === "warning";
         },
         render: function (tokens, idx) {
           if (tokens[idx].nesting === 1) {
             return '<div class="warning custom-block">\n<p class="custom-block-title">警告</p>\n';
           } else {
-            return '</div>\n';
+            return "</div>\n";
           }
-        }
+        },
       });
-      
+
       // 添加危险容器
-      md.use(window.markdownitContainer, 'danger', {
-        validate: function(params) {
-          return params.trim() === 'danger';
+      md.use(window.markdownitContainer, "danger", {
+        validate: function (params) {
+          return params.trim() === "danger";
         },
         render: function (tokens, idx) {
           if (tokens[idx].nesting === 1) {
             return '<div class="danger custom-block">\n<p class="custom-block-title">危险</p>\n';
           } else {
-            return '</div>\n';
+            return "</div>\n";
           }
-        }
+        },
       });
     }
-    
+
     if (window.markdownItAttrs) {
       md.use(window.markdownItAttrs);
     }
@@ -149,7 +169,7 @@ class MarkdownParser {
 
     const md = this.getMarkdownIt();
     if (!md) {
-      console.error('markdown-it 未正确加载，无法解析 Markdown');
+      console.error("markdown-it 未正确加载，无法解析 Markdown");
       return markdown;
     }
 
