@@ -1,0 +1,157 @@
+/* 简历按钮容器 */
+.resume-button-container {
+  margin-top: 40px;
+}
+
+/* 简历按钮基础样式 */
+.resume-button {
+  position: relative;
+  padding: 15px 35px;
+  font-size: 1.1rem;
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 30px;
+  backdrop-filter: blur(10px); /* 毛玻璃效果 */
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* 按钮悬停效果 */
+.resume-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* 按钮点击效果 */
+.resume-button:active {
+  transform: translateY(1px);
+}
+
+/* 按钮内容布局 */
+.button-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 下载图标样式 */
+.download-icon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+/* 下载图标悬停动画 */
+.resume-button:hover .download-icon {
+  animation: bounce 1s infinite;
+}
+
+/* 按钮模糊背景效果 */
+.button-blur {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.2) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.resume-button:hover .button-blur {
+  opacity: 1;
+}
+
+/* Offer文本样式优化 */
+.offer-text {
+  position: fixed;
+  font-size: 2.8rem; /* 稍微调小一点以适应更长的文本 */
+  font-weight: 800;
+  pointer-events: none;
+  animation: firework 1.2s ease-out forwards;
+  z-index: 1000;
+  transform: translate(-50%, -50%);
+  white-space: nowrap; /* 防止文本换行 */
+}
+
+/* 烟花动画效果 */
+@keyframes firework {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+  }
+  15% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--end-x)), calc(-50% + var(--end-y))) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* 淡出动画 */
+@keyframes fade {
+  0%, 20% {
+    opacity: 0;
+  }
+  30%, 60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 动画关键帧定义 */
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* 优化浮动动画效果 */
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  25% {
+    opacity: 0.9;
+    transform: translateY(-100px) scale(1.5) rotate(-10deg);
+  }
+  75% {
+    opacity: 0.7;
+    transform: translateY(-200px) scale(2.5) rotate(10deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-300px) scale(3) rotate(0deg);
+  }
+}
+
+/* 添加摇摆动画 */
+@keyframes swing {
+  0%, 100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}

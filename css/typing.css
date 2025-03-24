@@ -1,0 +1,23 @@
+/* 打字效果的光标样式 */
+.typing {
+  /* 创建一个模拟光标的右边框 */
+  border-right: 2px solid #fff;
+  /* 使用无限循环的闪烁动画 */
+  animation: blink 0.75s step-end infinite;
+  font-size: 1.2em;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+/* 光标闪烁动画 */
+@keyframes blink {
+  /* 动画开始和结束时光标透明 */
+  from,
+  to {
+    border-color: transparent;
+  }
+  /* 动画中间点光标显示为白色 */
+  50% {
+    border-color: #fff;
+  }
+}

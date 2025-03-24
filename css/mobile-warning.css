@@ -1,0 +1,51 @@
+/**
+ * 移动设备警告样式
+ * 包含移动设备访问时的提示样式
+ * @file mobile-warning.css
+ */
+
+/* 移动设备警告容器 */
+#mobile-warning {
+  display: none;
+}
+
+/* 警告弹窗 */
+.mobile-warning-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 9999;
+  max-width: 80%;
+}
+
+/* 警告文本 */
+.mobile-warning-popup p {
+  margin: 0;
+}
+
+.mobile-warning-popup p + p {
+  margin: 10px 0;
+}
+
+/* 关闭按钮 */
+.mobile-warning-button {
+  background: #3b50c9;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.mobile-warning-button:hover {
+  background: #2a3b9c;
+}

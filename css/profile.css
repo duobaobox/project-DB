@@ -1,0 +1,90 @@
+/* 头像容器的基础样式 */
+.profile-image {
+  width: 200px; /* 设置头像容器宽度为200px */
+  height: 200px; /* 设置头像容器高度为200px */
+  margin: 0 auto 30px; /* 上下边距0,左右自动居中,底部间距30px */
+  border-radius: 50%; /* 圆形头像 */
+  overflow: hidden; /* 确保内容不会超出圆形边界 */
+  border: 4px solid rgba(255, 255, 255, 0.3); /* 半透明白色边框 */
+  animation: float 3s ease-in-out infinite; /* 悬浮动画效果 */
+  position: relative; /* 相对定位,为子元素absolute定位提供参考 */
+  background-color: rgba(255, 255, 255, 0.1); /* 添加半透明白色背景 */
+}
+
+/* 狗狗图片样式 */
+.profile-image .dog-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 确保图片填充整个容器且不变形 */
+  transition: opacity 0.3s ease; /* 透明度过渡动画 */
+}
+
+/* emoji表情样式 */
+.profile-image .emoji {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center; /* 垂直居中 */
+  justify-content: center; /* 水平居中 */
+  font-size: 80px;
+  opacity: 0; /* 初始状态隐藏 */
+  transition: opacity 0.3s ease;
+  animation: none;
+}
+
+/* 鼠标悬停时隐藏狗狗图片 */
+.profile-image:hover .dog-image {
+  opacity: 0;
+}
+
+/* 鼠标悬停时显示并旋转emoji */
+.profile-image:hover .emoji {
+  opacity: 1;
+  animation: spin 1s linear infinite;
+}
+
+/* 悬浮动画关键帧 */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* 旋转动画关键帧 */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Offer+1 文本动画样式 */
+.offer-text {
+  position: fixed;
+  pointer-events: none;
+  animation: floatUp 1.5s ease-out forwards;
+  font-weight: bold;
+  z-index: 1000;
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px);
+  }
+}

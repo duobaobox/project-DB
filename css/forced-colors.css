@@ -1,0 +1,49 @@
+/**
+ * 强制色彩模式适配
+ * 替代旧的-ms-high-contrast属性，解决弃用警告
+ */
+
+/* 替换 @media (-ms-high-contrast: active) */
+@media (forced-colors: active) {
+  /* 
+   * 如果需要特定元素保持原始颜色而不受强制色彩模式影响
+   * 例如：图表、标志或需要保持原色的UI元素
+   */
+  .preserve-colors {
+    forced-color-adjust: none;
+  }
+
+  /* 
+   * 链接、按钮等元素的样式调整
+   * 使用系统颜色关键字确保可见性
+   */
+  a {
+    color: LinkText;
+    border-color: LinkText;
+  }
+
+  button,
+  .resume-button {
+    color: ButtonText;
+    background-color: ButtonFace;
+    border-color: ButtonText;
+  }
+
+  /* 
+   * 特殊样式调整，确保在高对比度模式下的可见性
+   */
+  .header-glow,
+  .header::before,
+  .header::after {
+    /* 确保这些装饰元素不会影响文本可读性 */
+    opacity: 0.2;
+  }
+}
+
+/* 支持同时兼容现代浏览器和IE的写法 */
+@media (-ms-high-contrast: active), (forced-colors: active) {
+  /* 
+   * 旧浏览器的兼容性样式
+   * 这一部分会随着-ms前缀的完全弃用而变得不必要
+   */
+}

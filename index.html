@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="个人作品集展示">
+	<!-- 设置网站图标 -->
+	<link rel="icon" href="img/网站icon.png">
+	<title>个人作品集</title>
+
+	<!-- CSS 样式文件 -->
+	<link rel="stylesheet" href="css/main.css">
+	<link rel="stylesheet" href="css/typing.css">
+	<link rel="stylesheet" href="css/resume-button.css">
+	<link rel="stylesheet" href="css/scroll-prompt.css">
+	<link rel="stylesheet" href="css/profile.css">
+	<link rel="stylesheet" href="css/about.css">
+	<link rel="stylesheet" href="css/modal.css">
+	<link rel="stylesheet" href="css/projects.css">
+	<link rel="stylesheet" href="css/mobile-warning.css">
+
+	<!-- JavaScript 文件 -->
+	<!-- 配置文件 (必须最先加载) -->
+	<script src="js/config.js"></script>
+	<!-- 项目配置文件 -->
+	<script src="js/project-config.js"></script>
+	<!-- Markdown 解析器 -->
+	<script src="js/markdown-loader.js"></script>
+	<!-- 项目卡片生成器 -->
+	<script src="js/project-generator.js"></script>
+	<!-- 打字效果 -->
+	<script src="js/typing.js"></script>
+	<!-- 文档下载脚本 -->
+	<script src="js/resume.js"></script>
+	<!-- 主要脚本文件 -->
+	<script src="js/main.js"></script>
+</head>
+
+<body>
+	<!-- 头部区域 -->
+	<header class="header">
+		<!-- 添加动态光晕元素 -->
+		<div class="header-glow"></div>
+
+		<div class="header-content">
+			<!-- 头像 -->
+			<div class="profile-image">
+				<img src="img/duobao.png" alt="可爱小狗" class="dog-image"
+					style="transform: scale(1.2) translateX(-10px) translateY(-10px);">
+				<div class="emoji"><img src="img/网站icon.png" alt="网站图标"
+						style="width: 100%; height: 100%; object-fit: contain;"></div>
+			</div>
+			<!-- 标题由 JS 从配置中动态生成 -->
+			<h1>你好，我是</h1>
+			<p>这是一个富有创造力的<span class="typing"></span></p>
+
+			<!-- 文档下载按钮 -->
+			<div class="resume-button-container">
+				<button class="resume-button" onclick="downloadResume()">
+					<span class="button-content">
+						<i class="download-icon">📄</i>
+						下载介绍文档
+					</span>
+					<div class="button-blur"></div>
+				</button>
+			</div>
+		</div>
+
+		<!-- 移动设备检测和提示 -->
+		<div id="mobile-warning">
+			<div class="mobile-warning-popup">
+				<p>📱 检测到您正在使用移动设备浏览该网页</p>
+				<p>为了获得最佳浏览体验，建议使用电脑访问本网站</p>
+				<button class="mobile-warning-button">我知道了</button>
+			</div>
+		</div>
+
+		<!-- 滚动提示 -->
+		<div class="scroll-prompt">
+			<div class="mouse">
+				<div class="wheel"></div>
+			</div>
+			<div class="text">向下滚动探索更多</div>
+		</div>
+	</header>
+
+	<!-- 关于我区域 -->
+	<section class="about">
+		<h2>关于我</h2>
+
+		<!-- 添加两列布局 -->
+		<div class="about-container">
+			<!-- 左侧简介列 -->
+			<div class="about-description">
+				<!-- 个人介绍文本 - 由 JS 从配置中动态生成 -->
+				<p class="intro-text"></p>
+
+				<!-- 技能标签 - 由 JS 从配置中动态生成 -->
+				<div class="skills-container"></div>
+			</div>
+
+		</div>
+	</section>
+
+	<!-- 作品展示区域 -->
+	<section class="portfolio">
+		<h2>作品展示</h2>
+		<!-- 项目网格容器 - 内容由 project-generator.js 自动生成 -->
+		<div class="projects-grid">
+			<!-- 项目卡片将通过 JS 自动生成，无需手动添加 -->
+		</div>
+	</section>
+
+	<!-- 项目弹窗容器 -->
+	<div class="modal" id="modal">
+		<div class="modal-content">
+			<!-- 弹窗头部 -->
+			<div class="modal-header">
+				<h2 id="modal-title"></h2>
+				<div class="close-btn" onclick="closeModal()">&times;</div>
+			</div>
+			<!-- 弹窗内容区域 -->
+			<div class="modal-body" id="modal-body">
+				<!-- 添加一个内容容器用于限制宽度和居中 -->
+				<div class="modal-body-container"></div>
+			</div>
+			<!-- 添加一个20px高度的空白间隔div -->
+			<div style="height: 20px;"></div>
+			<!-- 返回顶部按钮 -->
+			<div id="backToTop" class="back-to-top" onclick="scrollToTop()">
+				<i class="arrow-up"></i>
+			</div>
+		</div>
+	</div>
+</body>
+
+</html>
