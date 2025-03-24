@@ -26,6 +26,7 @@ const PROJECT_CONFIG = {
     "新增项目示例.md",
     "示例-神秘的宇宙之旅.md",
     "快速上手.md",
+    "markdown高级功能展示.md",
     // 在此处添加更多项目文件...
   ],
 

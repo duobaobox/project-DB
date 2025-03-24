@@ -17,291 +17,143 @@
 // 缓存已加载的项目内容
 const projectCache = new Map();
 
+// 加载 markdown-it 及其插件
+document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>');
+document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-emoji@2.0.2/dist/markdown-it-emoji.min.js"></script>');
+document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-footnote@3.0.3/dist/markdown-it-footnote.min.js"></script>');
+document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-sub@1.0.0/dist/markdown-it-sub.min.js"></script>');
+document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-sup@1.0.0/dist/markdown-it-sup.min.js"></script>');
+document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js"></script>');
+document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-anchor@8.6.7/dist/markdownItAnchor.min.js"></script>');
+document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-toc-done-right@4.2.0/dist/markdownItTocDoneRight.umd.min.js"></script>');
+document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-container@3.0.0/dist/markdown-it-container.min.js"></script>');
+document.write('<script src="https://cdn.jsdelivr.net/npm/markdown-it-attrs@4.1.6/markdown-it-attrs.browser.js"></script>');
+
 // 增强版 Markdown 解析器类
 class MarkdownParser {
   /**
+   * 获取配置好的 markdown-it 实例
+   * @returns {Object} markdown-it 实例
+   */
+  static getMarkdownIt() {
+    // 确保 markdown-it 已加载
+    if (typeof window.markdownit === 'undefined') {
+      console.error('markdown-it 库未加载');
+      return null;
+    }
+
+    // 创建并配置 markdown-it 实例
+    const md = window.markdownit({
+      html: true,         // 允许 HTML 标签
+      xhtmlOut: true,     // 使用 '/' 闭合单标签
+      breaks: true,       // 转换段落里的 '\n' 到 <br>
+      linkify: true,      // 自动将 URL 转换为链接
+      typographer: true,  // 启用一些语言中立的替换 + 引号美化
+      quotes: '""''',     // 引号样式
+      highlight: function (str, lang) {
+        // 如果有代码高亮库可以在这里配置
+        return `<pre class="language-${lang}"><code>${str}</code></pre>`;
+      }
+    });
+
+    // 添加插件（如果已加载）
+    if (window.markdownitEmoji) {
+      md.use(window.markdownitEmoji);
+    }
+    
+    if (window.markdownitFootnote) {
+      md.use(window.markdownitFootnote);
+    }
+    
+    if (window.markdownitSub) {
+      md.use(window.markdownitSub);
+    }
+    
+    if (window.markdownitSup) {
+      md.use(window.markdownitSup);
+    }
+    
+    if (window.markdownitTaskLists) {
+      md.use(window.markdownitTaskLists, {enabled: true, label: true});
+    }
+    
+    if (window.markdownitAnchor && window.markdownItTocDoneRight) {
+      md.use(window.markdownitAnchor, {
+        permalink: true,
+        permalinkSymbol: '#',
+        permalinkBefore: true
+      }).use(window.markdownItTocDoneRight, {
+        containerClass: 'toc-container',
+        listType: 'ul'
+      });
+    }
+    
+    if (window.markdownitContainer) {
+      // 添加提示容器
+      md.use(window.markdownitContainer, 'tip', {
+        validate: function(params) {
+          return params.trim() === 'tip';
+        },
+        render: function (tokens, idx) {
+          if (tokens[idx].nesting === 1) {
+            return '<div class="tip custom-block">\n<p class="custom-block-title">提示</p>\n';
+          } else {
+            return '</div>\n';
+          }
+        }
+      });
+      
+      // 添加警告容器
+      md.use(window.markdownitContainer, 'warning', {
+        validate: function(params) {
+          return params.trim() === 'warning';
+        },
+        render: function (tokens, idx) {
+          if (tokens[idx].nesting === 1) {
+            return '<div class="warning custom-block">\n<p class="custom-block-title">警告</p>\n';
+          } else {
+            return '</div>\n';
+          }
+        }
+      });
+      
+      // 添加危险容器
+      md.use(window.markdownitContainer, 'danger', {
+        validate: function(params) {
+          return params.trim() === 'danger';
+        },
+        render: function (tokens, idx) {
+          if (tokens[idx].nesting === 1) {
+            return '<div class="danger custom-block">\n<p class="custom-block-title">危险</p>\n';
+          } else {
+            return '</div>\n';
+          }
+        }
+      });
+    }
+    
+    if (window.markdownItAttrs) {
+      md.use(window.markdownItAttrs);
+    }
+
+    return md;
+  }
+
+  /**
    * 将 Markdown 文本转换为 HTML
-   * -------------------------------------------------------
-   * 这个方法是整个转换过程的核心，它使用正则表达式
-   * 将 Markdown 语法转换为对应的 HTML 标签
-   *
    * @param {string} markdown - Markdown 格式的文本
    * @returns {string} 转换后的 HTML
    */
   static parse(markdown) {
     if (!markdown) return "";
 
-    let html = markdown;
-
-    // 预处理：转义 HTML 特殊字符（但保留已有的 HTML 标签）
-    html = this.escapeHtml(html);
-
-    // 处理代码块（需要在其他处理之前进行）
-    html = this.parseCodeBlocks(html);
-
-    // 一次性处理所有标题 (h1 - h6)
-    html = html.replace(/^(#{1,6})\s+(.*?)$/gm, (match, hashes, content) => {
-      const level = hashes.length;
-      return `<h${level}>${content}</h${level}>`;
-    });
-
-    // 解析水平线
-    // 例如: --- 或 *** => <hr>
-    html = html.replace(/^(\-{3,}|\*{3,})$/gm, "<hr>");
-
-    // 解析引用区块
-    html = this.parseBlockquotes(html);
-
-    // 解析列表
-    html = this.parseOrderedLists(html);
-    html = this.parseUnorderedLists(html);
-
-    // 解析表格
-    html = this.parseTables(html);
-
-    // 优化：使用单次正则替换处理强调标记
-    html = html
-      // 粗体
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      // 斜体
-      .replace(/\*(.+?)\*/g, "<em>$1</em>")
-      // 删除线
-      .replace(/~~(.+?)~~/g, "<del>$1</del>")
-      // 内联代码
-      .replace(/`([^`]+)`/g, "<code>$1</code>");
-
-    // 解析链接
-    // 例如: [链接文本](https://example.com) => <a href="https://example.com">链接文本</a>
-    html = html.replace(
-      /\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener">$1</a>'
-    );
-
-    // 解析图片
-    // 例如: ![替代文本](image.jpg) => <img src="image.jpg" alt="替代文本">
-    html = html.replace(
-      /!\[([^\]]*)\]\(([^)]+)\)/g,
-      '<img src="$2" alt="$1" class="md-img">'
-    );
-
-    // 解析段落和换行
-    // 将连续两个换行符替换为段落分隔符
-    html = html
-      .replace(/\n\s*\n/g, "</p><p>")
-      // 将剩余的单个换行符替换为 <br>
-      .replace(/\n/g, "<br>");
-
-    // 处理表情符号
-    html = this.parseEmojis(html);
-
-    // 包装在段落标签中（如果不是以HTML标签开头）
-    if (!/^<(\w+)/.test(html)) {
-      html = `<p>${html}</p>`;
+    const md = this.getMarkdownIt();
+    if (!md) {
+      console.error('markdown-it 未正确加载，无法解析 Markdown');
+      return markdown;
     }
 
-    return html;
-  }
-
-  /**
-   * 转义 HTML 特殊字符
-   * -------------------------------------------------------
-   * @param {string} text - 要转义的文本
-   * @returns {string} 转义后的文本
-   */
-  static escapeHtml(text) {
-    // 保存所有已有的HTML标签
-    const htmlTags = [];
-    text = text.replace(/<[^>]*>/g, (match) => {
-      htmlTags.push(match);
-      return `__HTML_TAG_${htmlTags.length - 1}__`;
-    });
-
-    // 转义特殊字符
-    const map = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;",
-    };
-    text = text.replace(/[&<>"']/g, (m) => map[m]);
-
-    // 恢复HTML标签
-    text = text.replace(/__HTML_TAG_(\d+)__/g, (_, index) => {
-      return htmlTags[parseInt(index)];
-    });
-
-    return text;
-  }
-
-  /**
-   * 解析代码块
-   * -------------------------------------------------------
-   * @param {string} html - 要解析的 HTML
-   * @returns {string} 解析后的 HTML
-   */
-  static parseCodeBlocks(html) {
-    // 处理围栏式代码块 ```language code ```
-    html = html.replace(
-      /```([a-z]*)\n([\s\S]*?)\n```/g,
-      (match, language, code) => {
-        // 移除代码中的 HTML 转义，因为代码块内容应该按原样显示
-        code = code
-          .replace(/&lt;/g, "<")
-          .replace(/&gt;/g, ">")
-          .replace(/&amp;/g, "&");
-        const languageClass = language ? ` class="language-${language}"` : "";
-        return `<pre><code${languageClass}>${code}</code></pre>`;
-      }
-    );
-
-    // 处理缩进式代码块（4个空格或1个制表符）
-    html = html.replace(/^(( {4}|\t).*\n?)+/gm, (match) => {
-      // 移除每行开头的缩进
-      const code = match.replace(/^( {4}|\t)/gm, "");
-      return `<pre><code>${code}</code></pre>`;
-    });
-
-    return html;
-  }
-
-  /**
-   * 解析引用块
-   * -------------------------------------------------------
-   * @param {string} html - 要解析的 HTML
-   * @returns {string} 解析后的 HTML
-   */
-  static parseBlockquotes(html) {
-    // 匹配连续的引用行
-    return html.replace(/(^>.*\n?)+/gm, (match) => {
-      // 移除每行开头的 > 符号并合并内容
-      const content = match.replace(/^>\s?/gm, "");
-      return `<blockquote>${content}</blockquote>`;
-    });
-  }
-
-  /**
-   * 解析有序列表
-   * -------------------------------------------------------
-   * @param {string} html - 要解析的 HTML
-   * @returns {string} 解析后的 HTML
-   */
-  static parseOrderedLists(html) {
-    // 匹配有序列表项（1. 列表项）
-    html = html.replace(/^\s*(\d+)\.\s*(.*$)/gm, "<li>$2</li>");
-
-    // 将连续的列表项包装在 <ol> 标签中
-    html = html.replace(
-      /<li>(.*?)<\/li>(?:\s*<li>|$)/gs,
-      "<ol><li>$1</li></ol>"
-    );
-
-    // 修复嵌套的 ol 标签
-    html = html.replace(/<\/ol>\s*<ol>/g, "");
-
-    return html;
-  }
-
-  /**
-   * 解析无序列表
-   * -------------------------------------------------------
-   * @param {string} html - 要解析的 HTML
-   * @returns {string} 解析后的 HTML
-   */
-  static parseUnorderedLists(html) {
-    // 匹配无序列表项（- 列表项、* 列表项、+ 列表项）
-    html = html.replace(/^\s*[-*+]\s*(.*$)/gm, "<li>$1</li>");
-
-    // 将连续的列表项包装在 <ul> 标签中
-    html = html.replace(
-      /<li>(.*?)<\/li>(?:\s*<li>|$)/gs,
-      "<ul><li>$1</li></ul>"
-    );
-
-    // 修复嵌套的 ul 标签
-    html = html.replace(/<\/ul>\s*<ul>/g, "");
-
-    return html;
-  }
-
-  /**
-   * 解析表格
-   * -------------------------------------------------------
-   * @param {string} html - 要解析的 HTML
-   * @returns {string} 解析后的 HTML
-   */
-  static parseTables(html) {
-    // 匹配表格结构
-    return html.replace(
-      /^\|(.+)\|\s*\n\|(?:[-:]+\|)+\s*\n((?:\|.+\|\s*\n?)+)/gm,
-      (match, header, rows) => {
-        // 解析表头
-        const headers = header
-          .split("|")
-          .map((cell) => cell.trim())
-          .filter(Boolean);
-        const headerHtml = headers.map((cell) => `<th>${cell}</th>`).join("");
-
-        // 解析表格内容
-        const rowsHtml = rows
-          .split("\n")
-          .filter(Boolean)
-          .map((row) => {
-            const cells = row
-              .split("|")
-              .map((cell) => cell.trim())
-              .filter(Boolean);
-            return `<tr>${cells
-              .map((cell) => `<td>${cell}</td>`)
-              .join("")}</tr>`;
-          })
-          .join("");
-
-        // 组合表格 HTML
-        return `<table class="md-table">
-        <thead>
-          <tr>${headerHtml}</tr>
-        </thead>
-        <tbody>
-          ${rowsHtml}
-        </tbody>
-      </table>`;
-      }
-    );
-  }
-
-  /**
-   * 解析表情符号
-   * -------------------------------------------------------
-   * @param {string} html - 要解析的 HTML
-   * @returns {string} 解析后的 HTML
-   */
-  static parseEmojis(html) {
-    // 简单的表情映射
-    const emojiMap = {
-      ":smile:": "😊",
-      ":laughing:": "😄",
-      ":thumbsup:": "👍",
-      ":heart:": "❤️",
-      ":star:": "⭐",
-      ":warning:": "⚠️",
-      ":bulb:": "💡",
-      ":rocket:": "🚀",
-      ":chart:": "📊",
-      ":memo:": "📝",
-      ":computer:": "💻",
-      ":phone:": "📱",
-      ":email:": "📧",
-      ":calendar:": "📅",
-      ":clock:": "🕒",
-    };
-
-    // 替换表情符号
-    Object.keys(emojiMap).forEach((key) => {
-      html = html.replace(new RegExp(key, "g"), emojiMap[key]);
-    });
-
-    return html;
+    return md.render(markdown);
   }
 
   /**
@@ -556,220 +408,6 @@ async function scanAndLoadProjects() {
  * 负责加载项目内容并转换为可显示的HTML
  */
 class ProjectContentLoader {
-  // 项目样式模板
-  static PROJECT_STYLE = `
-    /* 项目详情基础样式 */
-    .project-detail {
-      color: #333;
-      line-height: 1.6;
-      font-size: 16px;
-    }
-    
-    /* 标题样式 */
-    .project-detail h1, .project-detail h2, .project-detail h3,
-    .project-detail h4, .project-detail h5, .project-detail h6 {
-      color: #2c3e50;
-      margin-top: 1.5em;
-      margin-bottom: 0.8em;
-      font-weight: 600;
-      line-height: 1.25;
-    }
-    
-    .project-detail h1 {
-      font-size: 2rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 2px solid #eaecef;
-      margin-top: 0;
-    }
-    
-    .project-detail h2 {
-      font-size: 1.5rem;
-      padding-bottom: 0.3rem;
-      border-bottom: 1px solid #eaecef;
-    }
-    
-    .project-detail h3 {
-      font-size: 1.25rem;
-    }
-    
-    .project-detail h4 {
-      font-size: 1.1rem;
-    }
-    
-    /* 段落和文本样式 */
-    .project-detail p {
-      margin-bottom: 1.2em;
-      line-height: 1.7;
-    }
-    
-    .project-detail strong {
-      font-weight: 600;
-      color: #0366d6;
-    }
-    
-    .project-detail em {
-      font-style: italic;
-      color: #5a6270;
-    }
-    
-    .project-detail del {
-      text-decoration: line-through;
-      color: #999;
-    }
-    
-    /* 链接样式 */
-    .project-detail a {
-      color: #0366d6;
-      text-decoration: none;
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.2s ease;
-    }
-    
-    .project-detail a:hover {
-      border-bottom-color: #0366d6;
-    }
-    
-    /* 列表样式 */
-    .project-detail ul, .project-detail ol {
-      padding-left: 2em;
-      margin-bottom: 1.2em;
-    }
-    
-    .project-detail li {
-      margin-bottom: 0.5em;
-    }
-    
-    .project-detail ul li {
-      list-style-type: disc;
-    }
-    
-    .project-detail ul li::marker {
-      color: #0366d6;
-    }
-    
-    .project-detail ol li {
-      list-style-type: decimal;
-    }
-    
-    /* 引用块样式 */
-    .project-detail blockquote {
-      border-left: 4px solid #0366d6;
-      padding: 0.8em 1em;
-      margin: 1.5em 0;
-      background-color: #f6f8fa;
-      color: #5a6270;
-      border-radius: 0 3px 3px 0;
-    }
-    
-    .project-detail blockquote p {
-      margin: 0;
-    }
-    
-    /* 代码样式 */
-    .project-detail code {
-      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-      background-color: #f6f8fa;
-      padding: 0.2em 0.4em;
-      border-radius: 3px;
-      font-size: 0.9em;
-      color: #d73a49;
-    }
-    
-    .project-detail pre {
-      background-color: #f6f8fa;
-      border-radius: 6px;
-      padding: 1em;
-      overflow: auto;
-      margin: 1.5em 0;
-    }
-    
-    .project-detail pre code {
-      background-color: transparent;
-      padding: 0;
-      color: #24292e;
-      font-size: 0.9em;
-      line-height: 1.5;
-      white-space: pre;
-    }
-    
-    /* 表格样式 */
-    .project-detail .md-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1.5em 0;
-      overflow: auto;
-      display: block;
-    }
-    
-    .project-detail .md-table th,
-    .project-detail .md-table td {
-      border: 1px solid #dfe2e5;
-      padding: 0.6em 1em;
-      text-align: left;
-    }
-    
-    .project-detail .md-table th {
-      background-color: #f6f8fa;
-      font-weight: 600;
-    }
-    
-    .project-detail .md-table tr:nth-child(2n) {
-      background-color: #f8f8f8;
-    }
-    
-    /* 水平线样式 */
-    .project-detail hr {
-      height: 0.25em;
-      padding: 0;
-      margin: 1.5em 0;
-      background-color: #e1e4e8;
-      border: 0;
-    }
-    
-    /* 图片样式 */
-    .project-detail .md-image {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 1.5em auto;
-      border-radius: 6px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* 特殊内容样式 */
-    .project-detail .highlight {
-      background-color: #fff8c5;
-      padding: 2px;
-    }
-    
-    /* 移动设备适配 */
-    @media (max-width: 768px) {
-      .project-detail {
-        font-size: 15px;
-      }
-      
-      .project-detail h1 {
-        font-size: 1.8rem;
-      }
-      
-      .project-detail h2 {
-        font-size: 1.3rem;
-      }
-      
-      .project-detail h3 {
-        font-size: 1.1rem;
-      }
-      
-      .project-detail .md-table {
-        font-size: 0.9em;
-      }
-      
-      .project-detail blockquote {
-        padding: 0.6em 0.8em;
-      }
-    }
-  `;
-
   /**
    * 加载项目内容
    *
@@ -825,14 +463,11 @@ class ProjectContentLoader {
         content = MarkdownParser.parse(markdownContent);
       }
 
-      // 添加Project Detail容器和样式
+      // 添加Project Detail容器
       const processedContent = `
         <div class="project-detail">
           ${content}
         </div>
-        <style>
-          ${this.PROJECT_STYLE}
-        </style>
       `;
 
       // 缓存处理好的内容
